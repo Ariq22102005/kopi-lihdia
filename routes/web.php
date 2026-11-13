@@ -5,14 +5,14 @@ use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Controllers\CatalogController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 
-// --- Publik ---
+// --- Publik (katalog) ---
 Route::get('/', fn () => redirect()->route('products.index'));
-
-// Sementara (diganti ProductController customer di Tahap 5)
-Route::get('/produk', fn () => view('products.index'))->name('products.index');
+Route::get('/produk', [CatalogController::class, 'index'])->name('products.index');
+Route::get('/produk/{product:slug}', [CatalogController::class, 'show'])->name('products.show');
 
 // --- Tamu (belum login) ---
 Route::middleware('guest')->group(function () {
