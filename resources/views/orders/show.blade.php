@@ -51,10 +51,73 @@
             @endif
         </div>
 
-        @if($order->payment_status === 'pending')
-            {{-- Tahap 8: diganti tombol bayar Midtrans --}}
-            <button class="btn btn-dark rounded-pill py-2 w-100" disabled>Bayar (aktif di Tahap 8)</button>
-        @endif
+        <div class="kl-product" style="border-radius:24px;">
+            <h5 class="fw-bold mb-3">Pembayaran</h5>
+
+            @if($order->payment_status === 'pending')
+                <p class="text-muted small mb-3">
+                    Selesaikan pembayaran melalui Midtrans. Setelah membayar, status akan diperbarui otomatis.
+                </p>
+                <button id="pay-button" class="btn btn-dark rounded-pill py-2 w-100">Bayar Sekarang</button>
+                <form method="POST" action="{{ route('payments.check', $order) }}" class="mt-2">
+                    @csrf
+                    <button class="btn btn-outline-dark rounded-pill py-2 w-100">Cek Status Pembayaran</button>
+                </form>
+            @elseif($order->payment_status === 'paid')
+                <div class="alert alert-success mb-2">Pembayaran berhasil diterima.</div>
+                <div class="small text-muted">
+                    Metode: {{ $order->payment_type ? strtoupper(str_replace('_', ' ', $order->payment_type)) : '-' }}<br>
+                    Dibayar: {{ $order->paid_at?->format('d M Y, H:i') ?? '-' }}
+                </div>
+            @elseif($order->payment_status === 'expired')
+                <div class="alert alert-secondary mb-0">Waktu pembayaran habis. Pesanan dibatalkan dan stok dikembalikan.</div>
+            @else
+                <div class="alert alert-danger mb-0">Pembayaran gagal. Pesanan dibatalkan dan stok dikembalikan.</div>
+            @endif
+        </div>
     </div>
 </div>
 @endsection
+
+@if($order->payment_status === 'pending')
+@push('scripts')
+<script src="{{ config('midtrans.is_production') ? 'https://app.midtrans.com/snap/snap.js' : 'https://app.sandbox.midtrans.com/snap/snap.js' }}"
+        data-client-key="{{ config('midtrans.client_key') }}"></script>
+<script>
+(function () {
+    const csrf = document.querySelector('meta[name="csrf-token"]').content;
+    const tokenUrl = @json(route('payments.token', $order));
+    const checkUrl = @json(route('payments.check', $order));
+    const btn = document.getElementById('pay-button');
+
+    const post = (url) => fetch(url, {
+        method: 'POST',
+        headers: { 'X-CSRF-TOKEN': csrf, 'Accept': 'application/json' }
+    });
+    const checkAndReload = () => post(checkUrl).finally(() => window.location.reload());
+
+    btn.addEventListener('click', async () => {
+        btn.disabled = true;
+        try {
+            const res = await post(tokenUrl);
+            const data = await res.json();
+            if (!res.ok) {
+                alert(data.message || 'Gagal memulai pembayaran.');
+                btn.disabled = false;
+                return;
+            }
+            window.snap.pay(data.token, {
+                onSuccess: checkAndReload,
+                onPending: checkAndReload,
+                onError: checkAndReload,
+                onClose: () => { btn.disabled = false; }
+            });
+        } catch (e) {
+            alert('Terjadi kesalahan jaringan.');
+            btn.disabled = false;
+        }
+    });
+})();
+</script>
+@endpush
+@endif
