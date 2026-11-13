@@ -9,29 +9,29 @@ use Illuminate\Support\Str;
 
 class CatalogSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
         $data = [
-            'Biji Kopi' => [
-                ['Arabika Gayo 250g', 85000, 25, 'Biji kopi arabika dari dataran tinggi Gayo, Aceh. Rasa fruity dengan aftertaste manis.'],
-                ['Arabika Toraja 250g', 90000, 18, 'Karakter earthy dan body tebal khas Toraja.'],
-                ['Robusta Lampung 250g', 55000, 40, 'Robusta pahit tegas, cocok untuk kopi susu.'],
-                ['Arabika Bali Kintamani 250g', 88000, 0, 'Citrus dan floral, stok sedang habis.'],
+            'Kopi Susu' => [
+                ['Es Kopi Susu Lihdia', 18000, 50, 'Signature kami: espresso, susu segar, dan gula aren.'],
+                ['Es Kopi Susu Gula Aren', 20000, 40, 'Manis alami gula aren dengan aroma kopi yang lembut.'],
+                ['Es Kopi Susu Pandan', 22000, 25, 'Perpaduan kopi susu dengan sirup pandan yang wangi.'],
+                ['Es Kopi Susu Karamel', 23000, 0, 'Karamel gurih manis, stok sedang habis.'],
             ],
-            'Kopi Bubuk' => [
-                ['Kopi Bubuk Tubruk 200g', 35000, 60, 'Giling kasar untuk seduh tubruk tradisional.'],
-                ['Kopi Bubuk Espresso 200g', 48000, 30, 'Giling halus untuk mesin espresso dan moka pot.'],
-                ['Kopi Bubuk Robusta Murni 200g', 32000, 2, 'Tanpa campuran, stok tinggal sedikit.'],
+            'Kopi Klasik' => [
+                ['Americano', 16000, 60, 'Espresso dan air, ringan dan segar.'],
+                ['Cappuccino', 22000, 30, 'Espresso dengan susu dan busa tebal.'],
+                ['Latte', 22000, 2, 'Susu lembut dengan shot espresso, stok tinggal sedikit.'],
             ],
-            'Alat Seduh' => [
-                ['V60 Dripper Keramik', 120000, 15, 'Dripper keramik ukuran 02 untuk manual brew.'],
-                ['Kertas Filter V60 (100 lembar)', 45000, 50, 'Filter kertas putih tanpa rasa.'],
-                ['French Press 600ml', 135000, 12, 'Gelas borosilikat dengan rangka stainless.'],
-                ['Moka Pot 3 Cup', 150000, 10, 'Moka pot aluminium untuk kopi ala espresso.'],
-                ['Gilingan Kopi Manual', 210000, 8, 'Burr keramik, ukuran gilingan bisa diatur.'],
+            'Non-Kopi' => [
+                ['Matcha Latte', 24000, 20, 'Matcha premium dengan susu creamy.'],
+                ['Cokelat Dingin', 21000, 25, 'Cokelat pekat dengan susu dingin.'],
+                ['Teh Tarik Lihdia', 17000, 35, 'Teh pekat dengan susu, gaya tarik.'],
+            ],
+            'Makanan' => [
+                ['Roti Bakar Cokelat Keju', 20000, 15, 'Roti tebal dengan cokelat dan keju parut.'],
+                ['Croissant Butter', 18000, 12, 'Croissant renyah dengan butter asli.'],
+                ['Kentang Goreng', 15000, 20, 'Kentang goreng renyah dengan saus sambal.'],
             ],
         ];
 
@@ -39,7 +39,7 @@ class CatalogSeeder extends Seeder
             $category = Category::create([
                 'name' => $categoryName,
                 'slug' => Str::slug($categoryName),
-                'description' => "Koleksi $categoryName pilihan KopiLihdia.",
+                'description' => "Menu $categoryName pilihan KopiLihdia.",
             ]);
 
             foreach ($products as [$name, $price, $stock, $desc]) {
@@ -50,7 +50,7 @@ class CatalogSeeder extends Seeder
                     'description' => $desc,
                     'price' => $price,
                     'stock' => $stock,
-                    'image' => null, // gambar diisi lewat upload admin nanti
+                    'image' => null,
                 ]);
             }
         }

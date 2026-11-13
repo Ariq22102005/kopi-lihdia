@@ -15,7 +15,7 @@
         </button>
         <div class="collapse navbar-collapse" id="nav">
             <ul class="navbar-nav me-auto">
-                <li class="nav-item"><a class="nav-link" href="{{ route('products.index') }}">Produk</a></li>
+                <li class="nav-item"><a class="nav-link" href="{{ route('products.index') }}">Menu</a></li>
             </ul>
             <ul class="navbar-nav">
                 @guest
@@ -23,7 +23,8 @@
                     <li class="nav-item"><a class="nav-link" href="{{ route('register') }}">Daftar</a></li>
                 @else
                     @if(auth()->user()->isAdmin())
-                        <li class="nav-item"><a class="nav-link" href="{{ route('admin.dashboard') }}">Dashboard Admin</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{{ route('admin.dashboard') }}">Dashboard</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{{ route('admin.categories.index') }}">Kategori</a></li>
                     @endif
                     <li class="nav-item"><a class="nav-link" href="{{ route('profile.edit') }}">{{ auth()->user()->name }}</a></li>
                     <li class="nav-item">
