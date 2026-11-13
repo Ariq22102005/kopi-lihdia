@@ -4,6 +4,7 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Admin\DashboardController;
 
 // --- Publik ---
 Route::get('/', fn () => redirect()->route('products.index'));
@@ -28,6 +29,5 @@ Route::middleware('auth')->group(function () {
 
 // --- Khusus admin ---
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
-    // Sementara (diganti DashboardController di Tahap 4)
-    Route::get('/', fn () => view('admin.dashboard'))->name('dashboard');
+    Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 });
