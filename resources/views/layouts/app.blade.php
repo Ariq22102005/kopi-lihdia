@@ -25,6 +25,7 @@
                     @if(auth()->user()->isAdmin())
                         <li class="nav-item"><a class="nav-link" href="{{ route('admin.dashboard') }}">Dashboard</a></li>
                         <li class="nav-item"><a class="nav-link" href="{{ route('admin.categories.index') }}">Kategori</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{{ route('admin.products.index') }}">Kelola Produk</a></li>
                     @endif
                     <li class="nav-item"><a class="nav-link" href="{{ route('profile.edit') }}">{{ auth()->user()->name }}</a></li>
                     <li class="nav-item">

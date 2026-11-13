@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\ProfileController;
@@ -10,7 +11,7 @@ use Illuminate\Support\Facades\Route;
 // --- Publik ---
 Route::get('/', fn () => redirect()->route('products.index'));
 
-// Sementara (diganti ProductController di Tahap 5)
+// Sementara (diganti ProductController customer di Tahap 5)
 Route::get('/produk', fn () => view('products.index'))->name('products.index');
 
 // --- Tamu (belum login) ---
@@ -32,4 +33,5 @@ Route::middleware('auth')->group(function () {
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
     Route::resource('categories', CategoryController::class)->except('show');
+    Route::resource('products', ProductController::class)->except('show');
 });
