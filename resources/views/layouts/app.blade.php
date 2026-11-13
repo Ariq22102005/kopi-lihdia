@@ -45,11 +45,17 @@
                   color: var(--kl-green); font-size: 1.6rem; line-height: 1; display: inline-flex; align-items: center;
                   justify-content: center; text-decoration: none; transition: .15s; flex-shrink: 0; }
         .kl-add:hover { background: var(--kl-green); color: #fff; }
-        .kl-add.disabled { opacity: .35; pointer-events: none; }
+        .kl-add.disabled, .kl-add:disabled { opacity: .35; pointer-events: none; }
+        button.kl-add { cursor: pointer; padding: 0; }
+        .kl-qty { display: inline-flex; align-items: center; gap: 8px; }
+        .kl-qty .btn { width: 34px; height: 34px; border-radius: 50%; padding: 0; line-height: 1; }
         .kl-badge { position: absolute; top: 10px; left: 10px; }
     </style>
 </head>
 <body>
+@php
+    $cartCount = auth()->check() ? auth()->user()->cartItems()->sum('quantity') : 0;
+@endphp
 <nav class="navbar navbar-expand-lg kl-nav">
     <div class="container">
         <a class="navbar-brand" href="{{ route('products.index') }}">☕ {{ config('app.name') }}</a>
@@ -61,6 +67,16 @@
                 <li class="nav-item"><a class="nav-link" href="{{ route('products.index') }}">Menu</a></li>
             </ul>
             <ul class="navbar-nav align-items-lg-center">
+                @if(!auth()->check() || !auth()->user()->isAdmin())
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ route('cart.index') }}">
+                            🛒 Keranjang
+                            @if($cartCount > 0)
+                                <span class="badge rounded-pill text-bg-success">{{ $cartCount }}</span>
+                            @endif
+                        </a>
+                    </li>
+                @endif
                 @guest
                     <li class="nav-item"><a class="nav-link" href="{{ route('login') }}">Masuk</a></li>
                     <li class="nav-item"><a class="nav-link" href="{{ route('register') }}">Daftar</a></li>

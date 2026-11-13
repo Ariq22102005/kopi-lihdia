@@ -31,10 +31,16 @@
             @endif
         </p>
 
-        {{-- Tahap 6: diganti form tambah ke keranjang --}}
-        <button class="btn btn-dark rounded-pill px-4 py-2" disabled>
-            Tambah ke keranjang (aktif di Tahap 6)
-        </button>
+        @if($product->stock > 0)
+            <form method="POST" action="{{ route('cart.store', $product) }}" class="d-flex align-items-center gap-2">
+                @csrf
+                <input type="number" name="quantity" value="1" min="1" max="{{ $product->stock }}"
+                       class="form-control rounded-pill text-center" style="width:90px">
+                <button class="btn btn-dark rounded-pill px-4 py-2">Tambah ke keranjang</button>
+            </form>
+        @else
+            <button class="btn btn-dark rounded-pill px-4 py-2" disabled>Stok habis</button>
+        @endif
     </div>
 </div>
 

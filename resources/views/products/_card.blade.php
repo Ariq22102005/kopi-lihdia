@@ -18,8 +18,11 @@
             <a href="{{ route('products.show', $product) }}" class="kl-product-name d-block">{{ $product->name }}</a>
             <div class="kl-price">Rp {{ number_format($product->price, 0, ',', '.') }}</div>
         </div>
-        {{-- Tahap 6: tombol ini diganti form "tambah ke keranjang" --}}
-        <a href="{{ route('products.show', $product) }}"
-           class="kl-add @if($product->stock <= 0) disabled @endif" aria-label="Lihat {{ $product->name }}">+</a>
+        <form method="POST" action="{{ route('cart.store', $product) }}">
+            @csrf
+            <input type="hidden" name="quantity" value="1">
+            <button type="submit" class="kl-add" aria-label="Tambah {{ $product->name }} ke keranjang"
+                    @disabled($product->stock <= 0)>+</button>
+        </form>
     </div>
 </div>
