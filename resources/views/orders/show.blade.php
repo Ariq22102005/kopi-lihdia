@@ -2,7 +2,8 @@
 @section('title', 'Pesanan ' . $order->order_number)
 
 @section('content')
-<div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-4">
+<a href="{{ route('orders.index') }}" class="text-decoration-none">&larr; Riwayat pesanan</a>
+<div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-4 mt-2">
     <div>
         <h3 class="fw-bold mb-1">Pesanan {{ $order->order_number }}</h3>
         <div class="text-muted small">{{ $order->created_at->format('d M Y, H:i') }}</div>
@@ -36,6 +37,7 @@
                 <span>Total</span>
                 <span style="color: var(--kl-green)">Rp {{ number_format($order->total, 0, ',', '.') }}</span>
             </div>
+            <a href="{{ route('orders.invoice', $order) }}" target="_blank" class="btn btn-outline-dark rounded-pill mt-3">Lihat Invoice</a>
         </div>
     </div>
 
