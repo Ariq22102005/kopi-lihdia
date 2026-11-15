@@ -1,58 +1,131 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# ☕ KopiLihdia
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Website e-commerce kopi dan camilan berbasis **Laravel** dengan pembayaran **Midtrans (Sandbox)**.
+Dibuat sebagai Tugas Besar Praktikum Pemrograman E-Commerce, Program Studi Sistem Informasi.
 
-## About Laravel
+## Fitur
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+**Pelanggan**
+- Registrasi, login, logout, dan ubah profil
+- Katalog menu, pencarian, filter kategori, dan detail produk
+- Keranjang belanja (tidak bisa melebihi stok)
+- Checkout dengan total dihitung ulang oleh server
+- Pembayaran melalui Midtrans Snap (Sandbox)
+- Riwayat pesanan, detail pesanan, dan invoice yang bisa dicetak
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+**Admin**
+- Dashboard statistik (produk, kategori, pelanggan, pesanan, menunggu bayar, sudah dibayar)
+- CRUD kategori (kategori yang masih punya produk tidak bisa dihapus)
+- CRUD produk dengan upload gambar, harga, dan stok
+- Manajemen pesanan: filter, detail, dan ubah status pemrosesan/pengiriman
+- Status pembayaran hanya diperbarui otomatis dari Midtrans, tidak bisa diubah manual
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## Teknologi
+Laravel, MySQL, Eloquent ORM, Blade, Bootstrap 5, Midtrans Snap (`midtrans/midtrans-php`), PHPUnit.
 
-## Learning Laravel
+## Instalasi
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
-
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
-
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
-
-## Agentic Development
-
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+Prasyarat: PHP 8.3+, Composer, MySQL, Git (di Windows paling mudah memakai Laragon).
 
 ```bash
-composer require laravel/boost --dev
-
-php artisan boost:install
+git clone https://github.com/Ariq22102005/kopi-lihdia.git
+cd kopi-lihdia
+composer install
+cp .env.example .env        # Windows PowerShell: copy .env.example .env
+php artisan key:generate
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+1. Buat database MySQL kosong bernama `kopi_lihdia` (collation `utf8mb4_unicode_ci`).
+2. Sesuaikan koneksi database dan kunci Midtrans di `.env`:
 
-## Contributing
+```env
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=kopi_lihdia
+DB_USERNAME=root
+DB_PASSWORD=
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+MIDTRANS_SERVER_KEY=SB-Mid-server-xxxxxxxx
+MIDTRANS_CLIENT_KEY=SB-Mid-client-xxxxxxxx
+MIDTRANS_IS_PRODUCTION=false
+```
 
-## Code of Conduct
+Kunci Sandbox diambil dari https://dashboard.sandbox.midtrans.com (Settings, Access Keys).
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+3. Migrasi, data contoh, dan link storage:
 
-## Security Vulnerabilities
+```bash
+php artisan migrate --seed
+php artisan storage:link
+php artisan serve
+```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+Buka http://localhost:8000.
 
-## License
+## Akun demo
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+| Peran | Email | Password |
+|---|---|---|
+| Admin | `admin@kopilihdia.test` | `password` |
+| Customer | `budi@example.com` | `password` |
+| Customer | `siti@example.com` | `password` |
+
+Seeder juga membuat 5 pesanan contoh dengan status berbeda (menunggu pembayaran, diproses, dikirim, selesai, kedaluwarsa). Akun ini hanya untuk demo.
+
+## Alur pembayaran Midtrans
+
+1. Customer membuat pesanan di checkout. Total dihitung server dari harga di database.
+2. Di halaman pesanan, tombol **Bayar Sekarang** meminta Snap token ke server, lalu membuka popup Midtrans.
+3. Midtrans mengirim notifikasi ke `POST /midtrans/notification`. Server memverifikasi `signature_key` (SHA512 dari `order_id + status_code + gross_amount + server_key`), memeriksa nominal sama dengan total pesanan, lalu memperbarui status.
+4. Tombol **Cek Status Pembayaran** memakai Status API Midtrans sebagai cadangan, berguna di localhost karena Midtrans tidak bisa menembak alamat lokal.
+
+Agar webhook asli bisa diterima saat pengembangan, jalankan tunnel (ngrok atau Cloudflare Tunnel) ke port 8000, lalu isi **Payment Notification URL** di dashboard Sandbox dengan `https://alamat-tunnel/midtrans/notification`.
+
+Status pembayaran: `pending`, `paid`, `expired`, `failed`. Saat pembayaran `expired` atau `failed`, pesanan dibatalkan dan stok dikembalikan otomatis.
+
+## Pengujian otomatis
+
+Pengujian memakai database terpisah supaya data asli aman.
+
+1. Buat database kosong `kopi_lihdia_test` (collation `utf8mb4_unicode_ci`).
+2. Jalankan:
+
+```bash
+php artisan config:clear
+php artisan test
+```
+
+Cakupan: kontrol akses admin/customer, validasi keranjang dan stok, checkout (total dari server, snapshot item, stok berkurang), verifikasi signature Midtrans (palsu ditolak, nominal tidak cocok ditolak, idempotent), dan aturan status pesanan admin.
+
+## Struktur penting
+
+```
+app/Http/Controllers/        Controller customer, admin, auth, pembayaran
+app/Http/Middleware/         AdminMiddleware (pembatasan hak akses)
+app/Models/                  User, Category, Product, CartItem, Order, OrderItem
+app/Services/                MidtransService, PaymentStatusUpdater
+database/migrations/         Skema database
+database/seeders/            Data contoh (user, katalog, pesanan)
+resources/views/             Tampilan Blade
+tests/Feature/               Pengujian fungsionalitas
+```
+
+## Skema database
+
+```mermaid
+erDiagram
+    users ||--o{ orders : membuat
+    users ||--o{ cart_items : memiliki
+    categories ||--o{ products : memiliki
+    products ||--o{ cart_items : "ada di"
+    orders ||--|{ order_items : berisi
+    products ||--o{ order_items : "dibeli sebagai"
+```
+
+## Keamanan
+- Middleware `admin` membatasi halaman admin, role tidak pernah diambil dari input pengguna.
+- Total pembayaran selalu dihitung ulang di server, tidak diterima dari browser.
+- Notifikasi Midtrans diverifikasi dengan signature dan nominal sebelum diproses.
+- Kunci Midtrans hanya di `.env` (tidak ikut repository).
+- Transaksi database dengan penguncian baris mencegah dua pembeli berebut stok terakhir.
