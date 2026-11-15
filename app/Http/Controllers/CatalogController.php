@@ -28,18 +28,23 @@ class CatalogController extends Controller
             ->paginate(12)
             ->withQueryString();
 
-        $categories = Category::withCount(['products' => fn ($q) => $q->where('is_active', true)])
-            ->orderBy('name')
-            ->get();
+        $categories = Category::withCount([
+            'products' => fn ($q) => $q->where('is_active', true),
+            'products as available_count' => fn ($q) => $q->where('is_active', true)->where('stock', '>', 0),
+        ])->orderBy('name')->get();
 
         $totalActive = Product::where('is_active', true)->count();
+        $totalAvailable = Product::where('is_active', true)->where('stock', '>', 0)->count();
+
+        [$cartItems, $cartQty, $subtotal] = $this->cartData($request);
 
         return view('products.index', compact(
-            'products', 'categories', 'totalActive', 'search', 'activeCategory'
+            'products', 'categories', 'totalActive', 'totalAvailable',
+            'search', 'activeCategory', 'cartItems', 'cartQty', 'subtotal'
         ));
     }
 
-    public function show(Product $product)
+    public function show(Request $request, Product $product)
     {
         abort_unless($product->is_active, 404);
 
@@ -51,6 +56,27 @@ class CatalogController extends Controller
             ->take(4)
             ->get();
 
-        return view('products.show', compact('product', 'related'));
+        [, $cartQty] = $this->cartData($request);
+
+        return view('products.show', compact('product', 'related', 'cartQty'));
+    }
+
+    /**
+     * Isi keranjang untuk panel pesanan dan penanda jumlah di kartu produk.
+     * Hanya untuk customer yang sedang login.
+     */
+    private function cartData(Request $request): array
+    {
+        $user = $request->user();
+
+        if (! $user || $user->isAdmin()) {
+            return [collect(), [], 0];
+        }
+
+        $items = $user->cartItems()->with('product')->get();
+        $qty = $items->pluck('quantity', 'product_id')->all();
+        $subtotal = $items->sum(fn ($i) => $i->product->price * $i->quantity);
+
+        return [$items, $qty, $subtotal];
     }
 }

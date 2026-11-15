@@ -40,6 +40,7 @@ Route::middleware('auth')->group(function () {
 
     // Keranjang
     Route::get('/keranjang', [CartController::class, 'index'])->name('cart.index');
+    Route::get('/keranjang/mini', [CartController::class, 'mini'])->name('cart.mini');
     Route::post('/keranjang/{product}', [CartController::class, 'store'])->name('cart.store');
     Route::patch('/keranjang/{cartItem}', [CartController::class, 'update'])->name('cart.update');
     Route::delete('/keranjang/{cartItem}', [CartController::class, 'destroy'])->name('cart.destroy');

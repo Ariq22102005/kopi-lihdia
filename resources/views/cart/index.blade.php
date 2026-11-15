@@ -24,7 +24,7 @@
                     @if($p->image)
                         <img src="{{ asset('storage/'.$p->image) }}" alt="{{ $p->name }}">
                     @else
-                        ☕
+                        <img src="{{ asset('img/logo-icon-green.png') }}" alt="" class="kl-ph">
                     @endif
                 </div>
 

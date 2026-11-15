@@ -21,6 +21,22 @@ class CartController extends Controller
         return view('cart.index', compact('items', 'total'));
     }
 
+    /**
+     * Data panel pesanan (HTML + jumlah) untuk pembaruan tanpa reload halaman.
+     */
+    public function mini(Request $request)
+    {
+        $items = $request->user()->cartItems()->with('product')->get();
+        $subtotal = $items->sum(fn ($i) => $i->product->price * $i->quantity);
+
+        return response()->json([
+            'html'           => view('cart._mini', compact('items', 'subtotal'))->render(),
+            'count'          => (int) $items->sum('quantity'),
+            'subtotal_label' => 'Rp ' . number_format($subtotal, 0, ',', '.'),
+            'quantities'     => (object) $items->pluck('quantity', 'product_id')->all(),
+        ]);
+    }
+
     public function store(Request $request, Product $product)
     {
         abort_if($request->user()->isAdmin(), 403, 'Admin tidak dapat berbelanja.');
@@ -32,7 +48,7 @@ class CartController extends Controller
         $quantity = $validated['quantity'] ?? 1;
 
         if ($product->stock <= 0) {
-            return back()->with('error', "{$product->name} sedang habis.");
+            return $this->respond($request, false, "{$product->name} sedang habis.");
         }
 
         $item = CartItem::where('user_id', $request->user()->id)
@@ -43,7 +59,7 @@ class CartController extends Controller
 
         // Cegah pembelian melebihi stok
         if ($newQuantity > $product->stock) {
-            return back()->with('error', "Stok {$product->name} hanya tersisa {$product->stock}.");
+            return $this->respond($request, false, "Stok {$product->name} hanya tersisa {$product->stock}.");
         }
 
         CartItem::updateOrCreate(
@@ -51,7 +67,7 @@ class CartController extends Controller
             ['quantity' => $newQuantity]
         );
 
-        return back()->with('success', "{$product->name} ditambahkan ke keranjang.");
+        return $this->respond($request, true, "{$product->name} ditambahkan ke keranjang.");
     }
 
     public function update(Request $request, CartItem $cartItem)
@@ -66,12 +82,12 @@ class CartController extends Controller
         $product = $cartItem->product;
 
         if ($validated['quantity'] > $product->stock) {
-            return back()->with('error', "Stok {$product->name} hanya tersisa {$product->stock}.");
+            return $this->respond($request, false, "Stok {$product->name} hanya tersisa {$product->stock}.");
         }
 
         $cartItem->update(['quantity' => $validated['quantity']]);
 
-        return back();
+        return $this->respond($request, true, '');
     }
 
     public function destroy(Request $request, CartItem $cartItem)
@@ -80,6 +96,22 @@ class CartController extends Controller
 
         $cartItem->delete();
 
-        return back()->with('success', 'Produk dihapus dari keranjang.');
+        return $this->respond($request, true, 'Produk dihapus dari keranjang.');
+    }
+
+    /**
+     * Jawaban JSON untuk permintaan AJAX, atau redirect biasa untuk form tanpa JavaScript.
+     */
+    private function respond(Request $request, bool $ok, string $message)
+    {
+        if ($request->expectsJson()) {
+            return response()->json(['ok' => $ok, 'message' => $message], $ok ? 200 : 422);
+        }
+
+        if ($message === '') {
+            return back();
+        }
+
+        return back()->with($ok ? 'success' : 'error', $message);
     }
 }

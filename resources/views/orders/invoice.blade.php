@@ -4,11 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Invoice {{ $order->order_number }}</title>
+    <link rel="icon" type="image/png" href="{{ asset('img/favicon.png') }}">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         body { background: #f4f1de; }
         .invoice { background: #fff; max-width: 800px; margin: 24px auto; padding: 40px; border-radius: 16px; }
-        .brand { color: #0b5d2e; font-weight: 800; font-size: 1.6rem; }
+        .brand { color: #1c5133; font-weight: 800; font-size: 1.6rem; }
         @media print {
             body { background: #fff; }
             .invoice { margin: 0; padding: 0; border-radius: 0; max-width: 100%; }
@@ -20,7 +21,7 @@
 <div class="invoice">
     <div class="d-flex justify-content-between align-items-start mb-4">
         <div>
-            <div class="brand">☕ {{ config('app.name') }}</div>
+            <img src="{{ asset('img/logo-horizontal-green.png') }}" alt="{{ config('app.name') }}" height="44">
             <div class="text-muted small">Invoice pesanan</div>
         </div>
         <div class="text-end">
