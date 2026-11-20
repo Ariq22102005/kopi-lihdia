@@ -6,8 +6,10 @@ use Tests\TestCase;
 
 class ExampleTest extends TestCase
 {
-    public function test_home_redirects_to_catalog(): void
+    public function test_home_page_is_shown(): void
     {
-        $this->get('/')->assertRedirect(route('products.index'));
+        $this->get('/')
+            ->assertOk()
+            ->assertSee('Fasilitas');
     }
 }

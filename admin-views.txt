@@ -1,0 +1,760 @@
+
+
+===== resources\views\layouts\app.blade.php =====
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>@yield('title', 'Beranda') - {{ config('app.name') }}</title>
+    <link rel="icon" type="image/png" href="{{ asset('img/favicon.png') }}">
+    <link rel="shortcut icon" href="{{ asset('favicon.ico') }}">
+    <meta name="theme-color" content="#1c5133">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="{{ asset('css/kopilihdia.css') }}?v=20" rel="stylesheet">
+    <script>
+        document.documentElement.classList.add('js');
+        // jaring pengaman: kalau skrip gagal dimuat, jangan biarkan konten tersembunyi
+        setTimeout(function () { if (!window.__klLoaded) document.documentElement.classList.add('kl-safe'); }, 3500);
+    </script>
+    @stack('head')
+</head>
+@php
+    $user = auth()->user();
+    $isAdmin = $user?->isAdmin() ?? false;
+    $isCustomer = $user && ! $isAdmin;
+    $isHome = request()->routeIs('home');
+
+    $cartItems = $isCustomer ? $user->cartItems()->with('product')->get() : collect();
+    $cartCount = (int) $cartItems->sum('quantity');
+    $cartTotal = $cartItems->sum(fn ($i) => $i->product->price * $i->quantity);
+@endphp
+<body data-login-url="{{ route('login') }}"
+      @if($isCustomer) data-mini-url="{{ route('cart.mini') }}" @endif>
+
+@include('partials.icons')
+<a href="#konten" class="skip-link">Lewati ke konten</a>
+
+<header @class(['kl-header', 'kl-header--dark' => $isHome]) data-header>
+    <div class="container kl-header-in">
+        <a href="{{ route('home') }}" class="kl-brand" aria-label="{{ config('app.name') }}, ke beranda">
+            <img src="{{ asset('img/logo-horizontal-green.png') }}" alt="{{ config('app.name') }}" class="kl-logo-on-light">
+            <img src="{{ asset('img/logo-horizontal-white.png') }}" alt="" class="kl-logo-on-dark" aria-hidden="true">
+        </a>
+
+        {{-- Menu (desktop). Di HP pakai tab bar di bawah. --}}
+        <nav class="kl-nav d-none d-lg-flex" aria-label="Navigasi utama" data-nav>
+            @if($isAdmin)
+                <a href="{{ route('admin.dashboard') }}" @class(['kl-link', 'active' => request()->routeIs('admin.dashboard')])>Dashboard</a>
+                <a href="{{ route('admin.categories.index') }}" @class(['kl-link', 'active' => request()->routeIs('admin.categories.*')])>Kategori</a>
+                <a href="{{ route('admin.products.index') }}" @class(['kl-link', 'active' => request()->routeIs('admin.products.*')])>Produk</a>
+                <a href="{{ route('admin.orders.index') }}" @class(['kl-link', 'active' => request()->routeIs('admin.orders.*')])>Pesanan</a>
+                <a href="{{ route('admin.reservations.index') }}" @class(['kl-link', 'active' => request()->routeIs('admin.reservations.*')])>Reservasi</a>
+            @else
+                <a href="{{ route('home') }}" @class(['kl-link', 'active' => request()->routeIs('home')])>Beranda</a>
+                <a href="{{ route('products.index') }}" @class(['kl-link', 'active' => request()->routeIs('products.*')])>Menu</a>
+                <a href="{{ route('home') }}#reservasi" class="kl-link">Reservasi</a>
+                @if($isCustomer)
+                    <a href="{{ route('orders.index') }}" @class(['kl-link', 'active' => request()->routeIs('orders.*')])>Pesanan</a>
+                @endif
+            @endif
+            <span class="kl-ink" aria-hidden="true"></span>
+        </nav>
+
+        <div class="kl-actions">
+            @guest
+                <a href="{{ route('login') }}" class="kl-textbtn">Masuk</a>
+                <a href="{{ route('products.index') }}" class="kl-cta">Pesan sekarang</a>
+            @else
+                @if($isCustomer)
+                    <a href="{{ route('cart.index') }}" data-cart-target aria-label="Keranjang"
+                       @class(['kl-iconlink', 'kl-hide-sm', 'active' => request()->routeIs('cart.*', 'checkout.*')])>
+                        <x-icon name="cart" :size="22" />
+                        <span class="kl-dot" data-cart-count @if($cartCount === 0) style="display:none" @endif>{{ $cartCount }}</span>
+                    </a>
+                @endif
+
+                <div class="kl-account" data-account>
+                    <button type="button" class="kl-avatar" aria-haspopup="menu" aria-expanded="false" aria-label="Menu akun {{ $user->name }}" data-account-btn>
+                        {{ \Illuminate\Support\Str::upper(\Illuminate\Support\Str::substr($user->name, 0, 1)) }}
+                    </button>
+                    <div class="kl-menu" role="menu" aria-label="Akun">
+                        <div class="kl-menu-head">
+                            <strong>{{ $user->name }}</strong>
+                            <small>{{ $user->email }}</small>
+                            @if($isAdmin)<span class="kl-role">Admin</span>@endif
+                        </div>
+                        <a href="{{ route('profile.edit') }}" role="menuitem" style="--i:0"><x-icon name="user" :size="18" /> Profil saya</a>
+                        @if($isAdmin)
+                            <a href="{{ route('home') }}" role="menuitem" style="--i:1"><x-icon name="home" :size="18" /> Lihat toko</a>
+                        @else
+                            <a href="{{ route('orders.index') }}" role="menuitem" style="--i:1"><x-icon name="receipt" :size="18" /> Pesanan saya</a>
+                        @endif
+                        <hr>
+                        <form method="POST" action="{{ route('logout') }}">
+                            @csrf
+                            <button type="submit" role="menuitem" class="is-danger" style="--i:2"><x-icon name="logout" :size="18" /> Keluar</button>
+                        </form>
+                    </div>
+                </div>
+            @endguest
+        </div>
+    </div>
+</header>
+
+@yield('hero')
+
+<main id="konten" @class(['container', 'kl-main', 'kl-main--home' => $isHome])>
+    @if(session('success'))
+        <div class="alert alert-success" role="status"><x-icon name="check" :size="20" /><div>{{ session('success') }}</div></div>
+    @endif
+    @if(session('error'))
+        <div class="alert alert-danger" role="alert"><x-icon name="alert" :size="20" /><div>{{ session('error') }}</div></div>
+    @endif
+    @yield('content')
+</main>
+
+<footer class="kl-footer">
+    <div class="container">
+        <div class="row g-4">
+            <div class="col-lg-5">
+                <img src="{{ asset('img/logo-horizontal-white.png') }}" alt="{{ config('app.name') }}" height="38" class="mb-3">
+                <p class="mb-0 small" style="max-width: 38ch">Kopi dan camilan pilihan, dipesan online dan dibayar mudah lewat Midtrans.</p>
+            </div>
+            <div class="col-6 col-lg-3 offset-lg-1">
+                <h6>Jelajahi</h6>
+                <ul>
+                    <li><a href="{{ route('home') }}">Beranda</a></li>
+                    <li><a href="{{ route('products.index') }}">Semua menu</a></li>
+                    @auth
+                        @unless($isAdmin)
+                            <li><a href="{{ route('orders.index') }}">Pesanan saya</a></li>
+                            <li><a href="{{ route('cart.index') }}">Keranjang</a></li>
+                        @endunless
+                    @else
+                        <li><a href="{{ route('login') }}">Masuk</a></li>
+                        <li><a href="{{ route('register') }}">Daftar</a></li>
+                    @endauth
+                </ul>
+            </div>
+            <div class="col-6 col-lg-3">
+                <h6>Pembayaran</h6>
+                <ul>
+                    <li class="d-flex align-items-center gap-2"><x-icon name="shield" :size="16" /> Diproses aman oleh Midtrans</li>
+                    <li class="d-flex align-items-center gap-2"><x-icon name="receipt" :size="16" /> Invoice tiap pesanan</li>
+                </ul>
+            </div>
+        </div>
+        <div class="kl-footer-bar">&copy; {{ now()->year }} {{ config('app.name') }}. Tugas Besar Praktikum Pemrograman E-Commerce.</div>
+    </div>
+</footer>
+
+<div id="kl-toasts" class="kl-toasts" role="status" aria-live="polite"></div>
+
+{{-- Bar keranjang (HP), muncul di atas tab bar saat ada isi --}}
+@if($isCustomer && request()->routeIs('products.*'))
+    <a href="{{ route('cart.index') }}" id="mobile-cart-bar" class="kl-mobile-bar d-lg-none"
+       @if($cartCount === 0) style="display:none" @endif>
+        <span><x-icon name="cart" :size="18" /> <span><span data-cart-count>{{ $cartCount }}</span> item</span></span>
+        <span data-bar-total>Rp {{ number_format($cartTotal, 0, ',', '.') }}</span>
+        <span>Lihat <x-icon name="chevron-right" :size="16" /></span>
+    </a>
+@endif
+
+{{-- Tab bar HP --}}
+<nav class="kl-tabbar d-lg-none" aria-label="Navigasi bawah">
+    @unless($isAdmin)
+        <a href="{{ route('home') }}" @class(['kl-tab', 'active' => request()->routeIs('home')])>
+            <x-icon name="home" :size="22" /> Beranda
+        </a>
+        <a href="{{ route('products.index') }}" @class(['kl-tab', 'active' => request()->routeIs('products.*')])>
+            <x-icon name="cup" :size="22" /> Menu
+        </a>
+    @endunless
+    @if($isAdmin)
+        <a href="{{ route('admin.dashboard') }}" @class(['kl-tab', 'active' => request()->routeIs('admin.dashboard')])><x-icon name="grid" :size="22" /> Dashboard</a>
+        <a href="{{ route('admin.products.index') }}" @class(['kl-tab', 'active' => request()->routeIs('admin.products.*', 'admin.categories.*')])><x-icon name="box" :size="22" /> Produk</a>
+        <a href="{{ route('admin.orders.index') }}" @class(['kl-tab', 'active' => request()->routeIs('admin.orders.*')])><x-icon name="receipt" :size="22" /> Pesanan</a>
+        <a href="{{ route('admin.reservations.index') }}" @class(['kl-tab', 'active' => request()->routeIs('admin.reservations.*')])><x-icon name="calendar" :size="22" /> Reservasi</a>
+    @elseif($isCustomer)
+        <a href="{{ route('orders.index') }}" @class(['kl-tab', 'active' => request()->routeIs('orders.*')])><x-icon name="receipt" :size="22" /> Pesanan</a>
+        <a href="{{ route('cart.index') }}" data-cart-target @class(['kl-tab', 'active' => request()->routeIs('cart.*', 'checkout.*')])>
+            <x-icon name="cart" :size="22" /> Keranjang
+            <span class="kl-dot" data-cart-count @if($cartCount === 0) style="display:none" @endif>{{ $cartCount }}</span>
+        </a>
+    @else
+        <a href="{{ route('login') }}" @class(['kl-tab', 'active' => request()->routeIs('login')])><x-icon name="lock" :size="22" /> Masuk</a>
+    @endif
+    @auth
+        <a href="{{ route('profile.edit') }}" @class(['kl-tab', 'active' => request()->routeIs('profile.*')])><x-icon name="user" :size="22" /> Akun</a>
+    @else
+        <a href="{{ route('register') }}" @class(['kl-tab', 'active' => request()->routeIs('register')])><x-icon name="user" :size="22" /> Daftar</a>
+    @endauth
+</nav>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="{{ asset('js/shop.js') }}?v=3" defer></script>
+<script src="{{ asset('js/fun.js') }}?v=1" defer></script>
+<script src="{{ asset('js/nav.js') }}?v=1" defer></script>
+@stack('scripts')
+</body>
+</html>
+
+
+===== C:\laragon\www\KopiLihdia\resources\views\admin\dashboard.blade.php =====
+
+@extends('layouts.app')
+@section('title', 'Dashboard Admin')
+
+@section('content')
+<div class="kl-pagehead">
+    <div>
+        <h1>Dashboard Admin</h1>
+        <p>Ringkasan toko KopiLihdia.</p>
+    </div>
+</div>
+
+@php
+    $cards = [
+        ['Total Produk', $stats['products'], 'box', null, route('admin.products.index')],
+        ['Total Kategori', $stats['categories'], 'layers', null, route('admin.categories.index')],
+        ['Total Pelanggan', $stats['customers'], 'users', null, null],
+        ['Total Pesanan', $stats['orders'], 'receipt', null, route('admin.orders.index')],
+        ['Menunggu Pembayaran', $stats['pending'], 'clock', 'is-warn', route('admin.orders.index', ['payment' => 'pending'])],
+        ['Sudah Dibayar', $stats['paid'], 'check', null, route('admin.orders.index', ['payment' => 'paid'])],
+        ['Reservasi Menunggu', $stats['reservations'], 'calendar', 'is-warn', route('admin.reservations.index', ['status' => 'pending'])],
+    ];
+@endphp
+<div class="row g-3">
+    @foreach($cards as [$label, $value, $icon, $mod, $href])
+        <div class="col-6 col-lg-4">
+            @if($href)<a href="{{ $href }}" class="text-decoration-none text-reset d-block h-100">@endif
+            <div class="kl-stat {{ $mod }}">
+                <span class="kl-stat-ic"><x-icon :name="$icon" :size="24" /></span>
+                <div>
+                    <div class="kl-stat-n">{{ $value }}</div>
+                    <div class="kl-stat-l">{{ $label }}</div>
+                </div>
+            </div>
+            @if($href)</a>@endif
+        </div>
+    @endforeach
+</div>
+@endsection
+
+
+===== C:\laragon\www\KopiLihdia\resources\views\admin\categories\create.blade.php =====
+
+@extends('layouts.app')
+@section('title', 'Tambah Kategori')
+
+@section('content')
+<div class="row justify-content-center"><div class="col-md-6">
+    <div class="card shadow-sm"><div class="card-body p-4">
+        <h4 class="mb-3">Tambah Kategori</h4>
+        <form method="POST" action="{{ route('admin.categories.store') }}">
+            @csrf
+            @include('admin.categories._form')
+        </form>
+    </div></div>
+</div></div>
+@endsection
+
+
+===== C:\laragon\www\KopiLihdia\resources\views\admin\categories\edit.blade.php =====
+
+@extends('layouts.app')
+@section('title', 'Ubah Kategori')
+
+@section('content')
+<div class="row justify-content-center"><div class="col-md-6">
+    <div class="card shadow-sm"><div class="card-body p-4">
+        <h4 class="mb-3">Ubah Kategori</h4>
+        <form method="POST" action="{{ route('admin.categories.update', $category) }}">
+            @csrf @method('PUT')
+            @include('admin.categories._form')
+        </form>
+    </div></div>
+</div></div>
+@endsection
+
+
+===== C:\laragon\www\KopiLihdia\resources\views\admin\categories\index.blade.php =====
+
+@extends('layouts.app')
+@section('title', 'Kategori')
+
+@section('content')
+<div class="kl-pagehead">
+    <div><h1>Kategori</h1><p>Kelompokkan menu agar mudah dicari pelanggan.</p></div>
+    <a href="{{ route('admin.categories.create') }}" class="btn btn-dark"><x-icon name="plus" :size="18" /> Tambah kategori</a>
+</div>
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0 align-middle">
+            <thead>
+                <tr><th>Nama</th><th>Slug</th><th>Jumlah Produk</th><th class="text-end">Aksi</th></tr>
+            </thead>
+            <tbody>
+            @forelse($categories as $c)
+                <tr>
+                    <td class="fw-semibold">{{ $c->name }}</td>
+                    <td class="text-muted">{{ $c->slug }}</td>
+                    <td>{{ $c->products_count }}</td>
+                    <td class="text-end text-nowrap">
+                        <a href="{{ route('admin.categories.edit', $c) }}" class="btn btn-sm btn-outline-secondary"><x-icon name="edit" :size="16" /> Ubah</a>
+                        <form action="{{ route('admin.categories.destroy', $c) }}" method="POST" class="d-inline"
+                              onsubmit="return confirm('Hapus kategori ini?')">
+                            @csrf @method('DELETE')
+                            <button class="btn btn-sm btn-outline-danger"><x-icon name="trash" :size="16" /> Hapus</button>
+                        </form>
+                    </td>
+                </tr>
+            @empty
+                <tr><td colspan="4" class="text-center text-muted py-5">Belum ada kategori.</td></tr>
+            @endforelse
+            </tbody>
+        </table>
+    </div>
+</div>
+<div class="mt-3">{{ $categories->links('pagination::bootstrap-5') }}</div>
+@endsection
+
+
+===== C:\laragon\www\KopiLihdia\resources\views\admin\categories\_form.blade.php =====
+
+<div class="mb-3">
+    <label class="form-label">Nama</label>
+    <input type="text" name="name" value="{{ old('name', $category->name ?? '') }}"
+           class="form-control @error('name') is-invalid @enderror" required>
+    @error('name')<div class="invalid-feedback">{{ $message }}</div>@enderror
+</div>
+<div class="mb-3">
+    <label class="form-label">Deskripsi</label>
+    <textarea name="description" rows="3" class="form-control">{{ old('description', $category->description ?? '') }}</textarea>
+</div>
+<a href="{{ route('admin.categories.index') }}" class="btn btn-light">Batal</a>
+<button class="btn btn-dark">Simpan</button>
+
+
+===== C:\laragon\www\KopiLihdia\resources\views\admin\orders\index.blade.php =====
+
+@extends('layouts.app')
+@section('title', 'Pesanan')
+
+@section('content')
+<div class="kl-pagehead"><div><h1>Pesanan</h1><p>Pantau pembayaran dan proses pesanan pelanggan.</p></div></div>
+
+<form method="GET" action="{{ route('admin.orders.index') }}" class="row g-2 mb-3">
+    <div class="col-md-5">
+        <input type="search" name="q" value="{{ $search }}" class="form-control" placeholder="Cari nomor pesanan atau nama penerima" aria-label="Cari pesanan">
+    </div>
+    <div class="col-md-3">
+        <select name="payment" aria-label="Status bayar" class="form-select">
+            <option value="">Semua status bayar</option>
+            @foreach(['pending' => 'Menunggu Pembayaran', 'paid' => 'Sudah Dibayar', 'expired' => 'Kedaluwarsa', 'failed' => 'Gagal'] as $v => $l)
+                <option value="{{ $v }}" @selected(request('payment') === $v)>{{ $l }}</option>
+            @endforeach
+        </select>
+    </div>
+    <div class="col-md-2">
+        <select name="status" class="form-select" aria-label="Status pesanan">
+            <option value="">Semua status pesanan</option>
+            @foreach(['pending' => 'Menunggu', 'processing' => 'Diproses', 'shipped' => 'Dikirim', 'completed' => 'Selesai', 'cancelled' => 'Dibatalkan'] as $v => $l)
+                <option value="{{ $v }}" @selected(request('status') === $v)>{{ $l }}</option>
+            @endforeach
+        </select>
+    </div>
+    <div class="col-md-2 d-grid">
+        <button class="btn btn-dark"><x-icon name="search" :size="16" /> Filter</button>
+    </div>
+</form>
+
+<div class="card shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0 align-middle">
+            <thead>
+                <tr><th>No. Pesanan</th><th>Pelanggan</th><th>Tanggal</th><th>Total</th><th>Status</th><th class="text-end">Aksi</th></tr>
+            </thead>
+            <tbody>
+            @forelse($orders as $order)
+                <tr>
+                    <td class="fw-semibold">{{ $order->order_number }}</td>
+                    <td>
+                        {{ $order->user->name }}
+                        <div class="small text-muted">{{ $order->recipient_name }}</div>
+                    </td>
+                    <td class="small">{{ $order->created_at->format('d M Y H:i') }}</td>
+                    <td>Rp {{ number_format($order->total, 0, ',', '.') }}</td>
+                    <td><div class="d-flex flex-column gap-1 align-items-start">@include('orders._status', ['order' => $order])</div></td>
+                    <td class="text-end">
+                        <a href="{{ route('admin.orders.show', $order) }}" class="btn btn-sm btn-outline-secondary">Detail <x-icon name="chevron-right" :size="14" /></a>
+                    </td>
+                </tr>
+            @empty
+                <tr><td colspan="6" class="text-center text-muted py-5">Belum ada pesanan.</td></tr>
+            @endforelse
+            </tbody>
+        </table>
+    </div>
+</div>
+<div class="mt-3">{{ $orders->links('pagination::bootstrap-5') }}</div>
+@endsection
+
+
+===== C:\laragon\www\KopiLihdia\resources\views\admin\orders\show.blade.php =====
+
+@extends('layouts.app')
+@section('title', 'Pesanan ' . $order->order_number)
+
+@section('content')
+<a href="{{ route('admin.orders.index') }}" class="kl-back"><x-icon name="chevron-left" :size="18" /> Semua pesanan</a>
+
+<div class="kl-pagehead">
+    <div>
+        <h1>{{ $order->order_number }}</h1>
+        <p>{{ $order->created_at->format('d M Y, H:i') }}</p>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">@include('orders._status', ['order' => $order])</div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-7">
+        <div class="kl-card mb-3">
+            <h2 class="kl-card-title">Item Pesanan</h2>
+            <div class="table-responsive">
+                <table class="table align-middle mb-0">
+                    <thead><tr><th>Menu</th><th class="text-end">Harga</th><th class="text-center">Jml</th><th class="text-end">Subtotal</th></tr></thead>
+                    <tbody>
+                    @foreach($order->items as $item)
+                        <tr>
+                            <td>{{ $item->product_name }}</td>
+                            <td class="text-end">Rp {{ number_format($item->price, 0, ',', '.') }}</td>
+                            <td class="text-center">{{ $item->quantity }}</td>
+                            <td class="text-end">Rp {{ number_format($item->subtotal, 0, ',', '.') }}</td>
+                        </tr>
+                    @endforeach
+                    </tbody>
+                </table>
+            </div>
+            <hr>
+            <div class="d-flex justify-content-between"><span>Subtotal</span><span>Rp {{ number_format($order->subtotal, 0, ',', '.') }}</span></div>
+            <div class="d-flex justify-content-between"><span>Ongkos kirim</span><span>Rp {{ number_format($order->shipping_cost, 0, ',', '.') }}</span></div>
+            <div class="d-flex justify-content-between fs-5 fw-bold mt-2">
+                <span>Total pembayaran</span>
+                <span>Rp {{ number_format($order->total, 0, ',', '.') }}</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-5">
+        <div class="kl-card mb-3">
+            <h2 class="kl-card-title">Pelanggan</h2>
+            <div class="fw-semibold">{{ $order->user->name }}</div>
+            <div class="small text-muted">{{ $order->user->email }}</div>
+            <hr>
+            <div class="small text-muted">Dikirim ke</div>
+            <div class="fw-semibold">{{ $order->recipient_name }}</div>
+            <div>{{ $order->recipient_phone }}</div>
+            <div class="mt-1">{{ $order->shipping_address }}</div>
+            <div>{{ $order->city }} {{ $order->postal_code }}</div>
+            @if($order->notes)
+                <div class="mt-2 small text-muted">Catatan: {{ $order->notes }}</div>
+            @endif
+        </div>
+
+        <div class="kl-card mb-3">
+            <h2 class="kl-card-title">Pembayaran</h2>
+            <div class="mb-2">Status: @include('orders._status', ['order' => $order])</div>
+            <div class="small text-muted">
+                Metode: {{ $order->payment_type ? strtoupper(str_replace('_', ' ', $order->payment_type)) : '-' }}<br>
+                Dibayar: {{ $order->paid_at?->format('d M Y, H:i') ?? '-' }}
+            </div>
+            <div class="alert alert-light border small mt-3 mb-0">
+                Status pembayaran hanya diperbarui otomatis berdasarkan verifikasi Midtrans dan tidak dapat diubah dari dashboard.
+            </div>
+        </div>
+
+        <div class="kl-card">
+            <h2 class="kl-card-title">Status Pemrosesan</h2>
+
+            @if($canUpdate)
+                <form method="POST" action="{{ route('admin.orders.status', $order) }}">
+                    @csrf @method('PATCH')
+                    @php
+                        $labels = ['processing' => 'Diproses', 'shipped' => 'Dikirim', 'completed' => 'Selesai'];
+                    @endphp
+                    <label class="form-label">Ubah menjadi</label>
+                    <select name="order_status" class="form-select mb-3 @error('order_status') is-invalid @enderror">
+                        @foreach($nextOptions as $opt)
+                            <option value="{{ $opt }}">{{ $labels[$opt] ?? $opt }}</option>
+                        @endforeach
+                    </select>
+                    @error('order_status')<div class="text-danger small mb-2">{{ $message }}</div>@enderror
+                    <button class="btn btn-dark w-100">Perbarui Status</button>
+                </form>
+            @elseif($order->payment_status !== 'paid')
+                <div class="text-muted small">Menunggu pembayaran terverifikasi sebelum pesanan dapat diproses.</div>
+            @else
+                <div class="text-muted small">Status pesanan sudah final.</div>
+            @endif
+        </div>
+    </div>
+</div>
+@endsection
+
+
+===== C:\laragon\www\KopiLihdia\resources\views\admin\products\create.blade.php =====
+
+@extends('layouts.app')
+@section('title', 'Tambah Produk')
+
+@section('content')
+<div class="row justify-content-center"><div class="col-md-8">
+    <div class="card shadow-sm"><div class="card-body p-4">
+        <h4 class="mb-3">Tambah Produk</h4>
+        <form method="POST" action="{{ route('admin.products.store') }}" enctype="multipart/form-data">
+            @csrf
+            @include('admin.products._form')
+        </form>
+    </div></div>
+</div></div>
+@endsection
+
+
+===== C:\laragon\www\KopiLihdia\resources\views\admin\products\edit.blade.php =====
+
+@extends('layouts.app')
+@section('title', 'Ubah Produk')
+
+@section('content')
+<div class="row justify-content-center"><div class="col-md-8">
+    <div class="card shadow-sm"><div class="card-body p-4">
+        <h4 class="mb-3">Ubah Produk</h4>
+        <form method="POST" action="{{ route('admin.products.update', $product) }}" enctype="multipart/form-data">
+            @csrf @method('PUT')
+            @include('admin.products._form')
+        </form>
+    </div></div>
+</div></div>
+@endsection
+
+
+===== C:\laragon\www\KopiLihdia\resources\views\admin\products\index.blade.php =====
+
+@extends('layouts.app')
+@section('title', 'Kelola Produk')
+
+@section('content')
+<div class="kl-pagehead">
+    <div><h1>Produk</h1><p>Atur menu, harga, dan stok.</p></div>
+    <a href="{{ route('admin.products.create') }}" class="btn btn-dark"><x-icon name="plus" :size="18" /> Tambah produk</a>
+</div>
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0 align-middle">
+            <thead>
+                <tr><th>Gambar</th><th>Nama</th><th>Kategori</th><th>Harga</th><th>Stok</th><th>Status</th><th class="text-end">Aksi</th></tr>
+            </thead>
+            <tbody>
+            @forelse($products as $p)
+                <tr>
+                    <td>
+                        @if($p->image)
+                            <img src="{{ asset('img/'.$p->image) }}" width="48" height="48" class="kl-thumb" alt="">
+                        @else
+                            <span class="kl-thumb d-inline-flex align-items-center justify-content-center"><img src="{{ asset('img/logo-icon-green.png') }}" alt="" width="26" style="opacity:.5"></span>
+                        @endif
+                    </td>
+                    <td class="fw-semibold">{{ $p->name }}</td>
+                    <td>{{ $p->category->name }}</td>
+                    <td class="text-nowrap">Rp {{ number_format($p->price, 0, ',', '.') }}</td>
+                    <td>
+                        @if($p->stock <= 0)
+                            <span class="kl-status kl-st-danger">Habis</span>
+                        @elseif($p->stock <= 5)
+                            <span class="kl-status kl-st-warning">{{ $p->stock }}</span>
+                        @else
+                            {{ $p->stock }}
+                        @endif
+                    </td>
+                    <td>
+                        @if($p->is_active)
+                            <span class="kl-status kl-st-success">Aktif</span>
+                        @else
+                            <span class="kl-status kl-st-secondary">Nonaktif</span>
+                        @endif
+                    </td>
+                    <td class="text-end text-nowrap">
+                        <a href="{{ route('admin.products.edit', $p) }}" class="btn btn-sm btn-outline-secondary"><x-icon name="edit" :size="16" /> Ubah</a>
+                        <form action="{{ route('admin.products.destroy', $p) }}" method="POST" class="d-inline"
+                              onsubmit="return confirm('Hapus produk ini?')">
+                            @csrf @method('DELETE')
+                            <button class="btn btn-sm btn-outline-danger"><x-icon name="trash" :size="16" /> Hapus</button>
+                        </form>
+                    </td>
+                </tr>
+            @empty
+                <tr><td colspan="7" class="text-center text-muted py-5">Belum ada produk.</td></tr>
+            @endforelse
+            </tbody>
+        </table>
+    </div>
+</div>
+<div class="mt-3">{{ $products->links('pagination::bootstrap-5') }}</div>
+@endsection
+
+
+===== C:\laragon\www\KopiLihdia\resources\views\admin\products\_form.blade.php =====
+
+<div class="mb-3">
+    <label class="form-label">Nama Produk</label>
+    <input type="text" name="name" value="{{ old('name', $product->name ?? '') }}"
+           class="form-control @error('name') is-invalid @enderror" required>
+    @error('name')<div class="invalid-feedback">{{ $message }}</div>@enderror
+</div>
+
+<div class="mb-3">
+    <label class="form-label">Kategori</label>
+    <select name="category_id" class="form-select @error('category_id') is-invalid @enderror" required>
+        <option value="">-- Pilih --</option>
+        @foreach($categories as $cat)
+            <option value="{{ $cat->id }}" @selected(old('category_id', $product->category_id ?? '') == $cat->id)>
+                {{ $cat->name }}
+            </option>
+        @endforeach
+    </select>
+    @error('category_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
+</div>
+
+<div class="mb-3">
+    <label class="form-label">Deskripsi</label>
+    <textarea name="description" rows="4" class="form-control">{{ old('description', $product->description ?? '') }}</textarea>
+</div>
+
+<div class="row">
+    <div class="col-md-6 mb-3">
+        <label class="form-label">Harga (Rp)</label>
+        <input type="number" name="price" min="0" value="{{ old('price', $product->price ?? '') }}"
+               class="form-control @error('price') is-invalid @enderror" required>
+        @error('price')<div class="invalid-feedback">{{ $message }}</div>@enderror
+    </div>
+    <div class="col-md-6 mb-3">
+        <label class="form-label">Stok</label>
+        <input type="number" name="stock" min="0" value="{{ old('stock', $product->stock ?? 0) }}"
+               class="form-control @error('stock') is-invalid @enderror" required>
+        @error('stock')<div class="invalid-feedback">{{ $message }}</div>@enderror
+    </div>
+</div>
+
+<div class="mb-3">
+    <label class="form-label">Gambar (maks 2 MB)</label>
+    @if(!empty($product->image))
+        <div class="mb-2"><img src="{{ asset('img/'.$product->image) }}" width="100" class="rounded"></div>
+    @endif
+    <input type="file" name="image" accept="image/*" class="form-control @error('image') is-invalid @enderror">
+    @error('image')<div class="invalid-feedback">{{ $message }}</div>@enderror
+</div>
+
+<div class="form-check mb-3">
+    <input type="hidden" name="is_active" value="0">
+    <input type="checkbox" name="is_active" value="1" class="form-check-input" id="is_active"
+           @checked(old('is_active', $product->is_active ?? true))>
+    <label class="form-check-label" for="is_active">Tampilkan di katalog</label>
+</div>
+
+<a href="{{ route('admin.products.index') }}" class="btn btn-light">Batal</a>
+<button class="btn btn-dark">Simpan</button>
+
+
+===== C:\laragon\www\KopiLihdia\resources\views\admin\reservations\index.blade.php =====
+
+@extends('layouts.app')
+@section('title', 'Reservasi')
+
+@section('content')
+<div class="kl-pagehead">
+    <div>
+        <h1>Reservasi</h1>
+        <p>
+            Kelola reservasi meja dari pelanggan.
+            @if($pendingCount > 0)<strong class="text-body">{{ $pendingCount }} menunggu konfirmasi.</strong>@endif
+        </p>
+    </div>
+</div>
+
+<form method="GET" action="{{ route('admin.reservations.index') }}" class="row g-2 mb-3">
+    <div class="col-md-5">
+        <input type="search" name="q" value="{{ $search }}" class="form-control" placeholder="Cari kode, nama, atau nomor telepon" aria-label="Cari reservasi">
+    </div>
+    <div class="col-md-3">
+        <select name="status" class="form-select" aria-label="Status reservasi">
+            <option value="">Semua status</option>
+            @foreach(\App\Models\Reservation::STATUSES as $v => $l)
+                <option value="{{ $v }}" @selected(request('status') === $v)>{{ $l }}</option>
+            @endforeach
+        </select>
+    </div>
+    <div class="col-md-2">
+        <input type="date" name="date" value="{{ request('date') }}" class="form-control" aria-label="Tanggal">
+    </div>
+    <div class="col-md-2 d-grid">
+        <button class="btn btn-dark"><x-icon name="search" :size="16" /> Filter</button>
+    </div>
+</form>
+
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0 align-middle">
+            <thead>
+                <tr><th>Kode</th><th>Pemesan</th><th>Jadwal</th><th>Orang</th><th>Catatan</th><th>Status</th><th class="text-end">Aksi</th></tr>
+            </thead>
+            <tbody>
+            @forelse($reservations as $r)
+                @php
+                    $color = ['pending' => 'warning', 'confirmed' => 'success', 'cancelled' => 'danger'][$r->status] ?? 'secondary';
+                    $wa = preg_replace('/^0/', '62', preg_replace('/\D+/', '', $r->phone));
+                @endphp
+                <tr>
+                    <td class="fw-semibold text-nowrap">{{ $r->code }}</td>
+                    <td>
+                        <div class="fw-semibold">{{ $r->name }}</div>
+                        <a href="https://wa.me/{{ $wa }}" target="_blank" rel="noopener" class="small">{{ $r->phone }}</a>
+                    </td>
+                    <td class="text-nowrap">{{ $r->date->format('d M Y') }}<div class="small text-muted">{{ $r->time }}</div></td>
+                    <td>{{ $r->guests }}</td>
+                    <td class="small text-muted" style="max-width: 220px">{{ $r->notes ?: '-' }}</td>
+                    <td><span class="kl-status kl-st-{{ $color }}">{{ \App\Models\Reservation::STATUSES[$r->status] ?? $r->status }}</span></td>
+                    <td class="text-end text-nowrap">
+                        @if($r->status !== 'confirmed')
+                            <form method="POST" action="{{ route('admin.reservations.status', $r) }}" class="d-inline">
+                                @csrf @method('PATCH')
+                                <input type="hidden" name="status" value="confirmed">
+                                <button class="btn btn-sm btn-dark"><x-icon name="check" :size="16" /> Konfirmasi</button>
+                            </form>
+                        @endif
+                        @if($r->status !== 'cancelled')
+                            <form method="POST" action="{{ route('admin.reservations.status', $r) }}" class="d-inline"
+                                  onsubmit="return confirm('Batalkan reservasi ini?')">
+                                @csrf @method('PATCH')
+                                <input type="hidden" name="status" value="cancelled">
+                                <button class="btn btn-sm btn-outline-danger"><x-icon name="x" :size="16" /> Batalkan</button>
+                            </form>
+                        @endif
+                    </td>
+                </tr>
+            @empty
+                <tr><td colspan="7" class="text-center text-muted py-5">Belum ada reservasi.</td></tr>
+            @endforelse
+            </tbody>
+        </table>
+    </div>
+</div>
+<div class="mt-3">{{ $reservations->links('pagination::bootstrap-5') }}</div>
+@endsection
+

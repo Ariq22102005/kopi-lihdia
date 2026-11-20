@@ -15,5 +15,5 @@
     [$payLabel, $payColor] = $payment[$order->payment_status] ?? [$order->payment_status, 'secondary'];
     [$procLabel, $procColor] = $process[$order->order_status] ?? [$order->order_status, 'secondary'];
 @endphp
-<span class="badge text-bg-{{ $payColor }}">Bayar: {{ $payLabel }}</span>
-<span class="badge text-bg-{{ $procColor }}">Pesanan: {{ $procLabel }}</span>
+<span class="kl-status kl-st-{{ $payColor }}">Bayar: {{ $payLabel }}</span>
+<span class="kl-status kl-st-{{ $procColor }}">Pesanan: {{ $procLabel }}</span>

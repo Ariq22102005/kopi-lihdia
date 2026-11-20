@@ -1,34 +1,34 @@
-@extends('layouts.app')
+@extends('layouts.admin')
 @section('title', 'Kategori')
 
 @section('content')
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h3 class="mb-0">Kategori</h3>
-    <a href="{{ route('admin.categories.create') }}" class="btn btn-dark">+ Tambah</a>
+<div class="kl-pagehead">
+    <div><h1>Kategori</h1><p>Kelompokkan menu agar mudah dicari pelanggan.</p></div>
+    <a href="{{ route('admin.categories.create') }}" class="btn btn-dark"><x-icon name="plus" :size="18" /> Tambah kategori</a>
 </div>
-<div class="card shadow-sm">
+<div class="ad-card">
     <div class="table-responsive">
         <table class="table table-hover mb-0 align-middle">
-            <thead class="table-light">
+            <thead>
                 <tr><th>Nama</th><th>Slug</th><th>Jumlah Produk</th><th class="text-end">Aksi</th></tr>
             </thead>
             <tbody>
             @forelse($categories as $c)
                 <tr>
-                    <td>{{ $c->name }}</td>
+                    <td class="fw-semibold">{{ $c->name }}</td>
                     <td class="text-muted">{{ $c->slug }}</td>
-                    <td>{{ $c->products_count }}</td>
-                    <td class="text-end">
-                        <a href="{{ route('admin.categories.edit', $c) }}" class="btn btn-sm btn-outline-secondary">Ubah</a>
+                    <td><span class="kl-status kl-st-success">{{ $c->products_count }} produk</span></td>
+                    <td class="text-end text-nowrap">
+                        <a href="{{ route('admin.categories.edit', $c) }}" class="btn btn-sm btn-outline-secondary"><x-icon name="edit" :size="16" /> Ubah</a>
                         <form action="{{ route('admin.categories.destroy', $c) }}" method="POST" class="d-inline"
                               onsubmit="return confirm('Hapus kategori ini?')">
                             @csrf @method('DELETE')
-                            <button class="btn btn-sm btn-outline-danger">Hapus</button>
+                            <button class="btn btn-sm btn-outline-danger"><x-icon name="trash" :size="16" /> Hapus</button>
                         </form>
                     </td>
                 </tr>
             @empty
-                <tr><td colspan="4" class="text-center text-muted py-4">Belum ada kategori.</td></tr>
+                <tr><td colspan="4" class="text-center text-muted py-5">Belum ada kategori.</td></tr>
             @endforelse
             </tbody>
         </table>

@@ -2,26 +2,48 @@
 @section('title', 'Pesanan ' . $order->order_number)
 
 @section('content')
-<a href="{{ route('orders.index') }}" class="text-decoration-none">&larr; Riwayat pesanan</a>
-<div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-4 mt-2">
+@php
+    $closed = in_array($order->payment_status, ['expired', 'failed'], true) || $order->order_status === 'cancelled';
+    $stage = 0;
+    if ($order->payment_status === 'paid') {
+        $stage = ['processing' => 2, 'shipped' => 3, 'completed' => 4][$order->order_status] ?? 1;
+    }
+    $track = [['Dibuat', 'receipt'], ['Dibayar', 'wallet'], ['Diproses', 'cup'], ['Dikirim', 'truck'], ['Selesai', 'check']];
+@endphp
+
+<a href="{{ route('orders.index') }}" class="kl-back"><x-icon name="chevron-left" :size="18" /> Riwayat pesanan</a>
+<div class="kl-pagehead">
     <div>
-        <h3 class="fw-bold mb-1">Pesanan {{ $order->order_number }}</h3>
-        <div class="text-muted small">{{ $order->created_at->format('d M Y, H:i') }}</div>
+        <h1>Pesanan {{ $order->order_number }}</h1>
+        <p>{{ $order->created_at->format('d M Y, H:i') }}</p>
     </div>
-    <div class="d-flex gap-1 flex-wrap">@include('orders._status', ['order' => $order])</div>
+    <div class="d-flex gap-2 flex-wrap">@include('orders._status', ['order' => $order])</div>
 </div>
+
+@unless($closed)
+    <div class="kl-card mb-4" aria-label="Progres pesanan">
+        <div class="kl-track">
+            @foreach($track as $i => [$label, $icon])
+                <div class="kl-track-item @if($i < $stage || ($stage === 4 && $i === 4)) done @elseif($i === $stage) now @endif">
+                    <span class="kl-track-dot"><x-icon :name="$icon" :size="16" /></span>
+                    <div>{{ $label }}</div>
+                </div>
+            @endforeach
+        </div>
+    </div>
+@endunless
 
 <div class="row g-4">
     <div class="col-lg-7">
-        <div class="kl-product" style="border-radius:24px;">
-            <h5 class="fw-bold mb-3">Item Pesanan</h5>
+        <div class="kl-card">
+            <h2 class="kl-card-title"><x-icon name="cup" :size="20" /> Item Pesanan</h2>
             <div class="table-responsive">
                 <table class="table align-middle mb-0">
                     <thead><tr><th>Menu</th><th class="text-end">Harga</th><th class="text-center">Jml</th><th class="text-end">Subtotal</th></tr></thead>
                     <tbody>
                     @foreach($order->items as $item)
                         <tr>
-                            <td>{{ $item->product_name }}</td>
+                            <td class="fw-semibold">{{ $item->product_name }}</td>
                             <td class="text-end">Rp {{ number_format($item->price, 0, ',', '.') }}</td>
                             <td class="text-center">{{ $item->quantity }}</td>
                             <td class="text-end">Rp {{ number_format($item->subtotal, 0, ',', '.') }}</td>
@@ -30,20 +52,18 @@
                     </tbody>
                 </table>
             </div>
-            <hr>
-            <div class="d-flex justify-content-between"><span>Subtotal</span><span>Rp {{ number_format($order->subtotal, 0, ',', '.') }}</span></div>
-            <div class="d-flex justify-content-between"><span>Ongkos kirim</span><span>Rp {{ number_format($order->shipping_cost, 0, ',', '.') }}</span></div>
-            <div class="d-flex justify-content-between fs-5 fw-bold mt-2">
-                <span>Total</span>
-                <span style="color: var(--kl-green)">Rp {{ number_format($order->total, 0, ',', '.') }}</span>
+            <div class="mt-3">
+                <div class="kl-summary-row"><span>Subtotal</span><span>Rp {{ number_format($order->subtotal, 0, ',', '.') }}</span></div>
+                <div class="kl-summary-row"><span>Ongkos kirim</span><span>Rp {{ number_format($order->shipping_cost, 0, ',', '.') }}</span></div>
+                <div class="kl-summary-total"><span>Total</span><span>Rp {{ number_format($order->total, 0, ',', '.') }}</span></div>
             </div>
-            <a href="{{ route('orders.invoice', $order) }}" target="_blank" class="btn btn-outline-dark rounded-pill mt-3">Lihat Invoice</a>
+            <a href="{{ route('orders.invoice', $order) }}" target="_blank" rel="noopener" class="btn btn-outline-dark mt-3"><x-icon name="receipt" :size="18" /> Lihat invoice</a>
         </div>
     </div>
 
     <div class="col-lg-5">
-        <div class="kl-product mb-3" style="border-radius:24px;">
-            <h5 class="fw-bold mb-3">Pengiriman</h5>
+        <div class="kl-card mb-3">
+            <h2 class="kl-card-title"><x-icon name="pin" :size="20" /> Pengiriman</h2>
             <div class="fw-semibold">{{ $order->recipient_name }}</div>
             <div>{{ $order->recipient_phone }}</div>
             <div class="mt-2">{{ $order->shipping_address }}</div>
@@ -53,28 +73,28 @@
             @endif
         </div>
 
-        <div class="kl-product" style="border-radius:24px;">
-            <h5 class="fw-bold mb-3">Pembayaran</h5>
+        <div class="kl-card">
+            <h2 class="kl-card-title"><x-icon name="wallet" :size="20" /> Pembayaran</h2>
 
             @if($order->payment_status === 'pending')
                 <p class="text-muted small mb-3">
                     Selesaikan pembayaran melalui Midtrans. Setelah membayar, status akan diperbarui otomatis.
                 </p>
-                <button id="pay-button" class="btn btn-dark rounded-pill py-2 w-100">Bayar Sekarang</button>
+                <button id="pay-button" class="btn btn-dark btn-lg w-100"><x-icon name="card" :size="20" /> Bayar sekarang</button>
                 <form method="POST" action="{{ route('payments.check', $order) }}" class="mt-2">
                     @csrf
-                    <button class="btn btn-outline-dark rounded-pill py-2 w-100">Cek Status Pembayaran</button>
+                    <button class="btn btn-outline-dark w-100">Cek status pembayaran</button>
                 </form>
             @elseif($order->payment_status === 'paid')
-                <div class="alert alert-success mb-2">Pembayaran berhasil diterima.</div>
+                <div class="alert alert-success mb-2"><x-icon name="check" :size="20" /><div>Pembayaran berhasil diterima.</div></div>
                 <div class="small text-muted">
                     Metode: {{ $order->payment_type ? strtoupper(str_replace('_', ' ', $order->payment_type)) : '-' }}<br>
                     Dibayar: {{ $order->paid_at?->format('d M Y, H:i') ?? '-' }}
                 </div>
             @elseif($order->payment_status === 'expired')
-                <div class="alert alert-secondary mb-0">Waktu pembayaran habis. Pesanan dibatalkan dan stok dikembalikan.</div>
+                <div class="alert alert-secondary mb-0"><x-icon name="clock" :size="20" /><div>Waktu pembayaran habis. Pesanan dibatalkan dan stok dikembalikan.</div></div>
             @else
-                <div class="alert alert-danger mb-0">Pembayaran gagal. Pesanan dibatalkan dan stok dikembalikan.</div>
+                <div class="alert alert-danger mb-0"><x-icon name="alert" :size="20" /><div>Pembayaran gagal. Pesanan dibatalkan dan stok dikembalikan.</div></div>
             @endif
         </div>
     </div>

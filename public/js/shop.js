@@ -10,15 +10,20 @@
         const box = document.getElementById('kl-toasts');
         if (!box || !message) return;
 
+        const kind = type || 'success';
         const el = document.createElement('div');
-        el.className = 'kl-toast kl-toast-' + (type || 'success');
-        el.textContent = message;
+        el.className = 'kl-toast kl-toast-' + kind;
+        el.innerHTML = '<svg class="kl-i" width="18" height="18" aria-hidden="true"><use href="#i-' +
+            (kind === 'error' ? 'alert' : 'check') + '"/></svg>';
+        const text = document.createElement('span');
+        text.textContent = message;
+        el.appendChild(text);
         box.appendChild(el);
 
         setTimeout(() => {
             el.classList.add('hide');
             setTimeout(() => el.remove(), 300);
-        }, 2600);
+        }, 2800);
     }
 
     async function send(url, method, data) {
@@ -55,6 +60,7 @@
         const d = await res.json();
 
         const panel = document.getElementById('mini-cart');
+        const prevTotal = panel?.querySelector('.kl-summary-total span:last-child')?.textContent || '';
         if (panel) panel.innerHTML = d.html;
 
         document.querySelectorAll('[data-cart-count]').forEach((el) => {
@@ -76,11 +82,13 @@
             const add = card.querySelector('.kl-add');
 
             if (badge) {
-                badge.textContent = n;
+                (badge.querySelector('b') || badge).textContent = n;
                 badge.style.display = n > 0 ? '' : 'none';
             }
             if (add) add.classList.toggle('kl-add-on', n > 0);
         });
+
+        document.dispatchEvent(new CustomEvent('kl:cart-updated', { detail: { count: d.count, prevTotal: prevTotal } }));
     }
 
     // Tombol + pada kartu produk dan halaman detail
@@ -99,7 +107,15 @@
         if (!r) return;
 
         toast(r.json.message || (r.ok ? 'Ditambahkan ke keranjang.' : 'Gagal menambahkan.'), r.ok ? 'success' : 'error');
-        if (r.ok) await refreshMini();
+        if (r.ok) {
+            if (btn && btn.classList.contains('kl-add')) {
+                btn.classList.remove('pop');
+                void btn.offsetWidth;          // restart animasi
+                btn.classList.add('pop');
+            }
+            document.dispatchEvent(new CustomEvent('kl:added', { detail: { form: form, btn: btn } }));
+            await refreshMini();
+        }
     });
 
     // Tombol jumlah dan hapus di panel pesanan
@@ -117,5 +133,58 @@
         if (!r.ok) toast(r.json.message || 'Gagal memperbarui keranjang.', 'error');
 
         await refreshMini();
+    });
+
+    // Stepper jumlah di halaman detail produk
+    document.addEventListener('click', (e) => {
+        const b = e.target.closest('[data-stepper] [data-step]');
+        if (!b) return;
+
+        const input = b.closest('[data-stepper]').querySelector('input');
+        const min = parseInt(input.min || '1', 10);
+        const max = parseInt(input.max || '999', 10);
+        const next = (parseInt(input.value, 10) || min) + parseInt(b.dataset.step, 10);
+        input.value = Math.min(max, Math.max(min, next));
+    });
+
+    // Tampilkan / sembunyikan password
+    document.addEventListener('click', (e) => {
+        const b = e.target.closest('[data-toggle-password]');
+        if (!b) return;
+
+        const input = document.getElementById(b.dataset.togglePassword);
+        if (!input) return;
+
+        const show = input.type === 'password';
+        input.type = show ? 'text' : 'password';
+        b.setAttribute('aria-label', show ? 'Sembunyikan password' : 'Tampilkan password');
+        const use = b.querySelector('use');
+        if (use) use.setAttribute('href', show ? '#i-eye-off' : '#i-eye');
+    });
+
+    // Cegah kirim ganda: tombol submit berubah jadi "memproses" setelah formulir valid
+    document.addEventListener('submit', (e) => {
+        const form = e.target;
+        if (form.hasAttribute('data-ajax-add') || e.defaultPrevented) return;
+
+        const btn = form.querySelector('button[data-loading-text]');
+        if (!btn) return;
+
+        setTimeout(() => {
+            btn.classList.add('is-loading');
+            btn.setAttribute('aria-disabled', 'true');
+            btn.dataset.origText = btn.textContent;
+            btn.textContent = btn.dataset.loadingText;
+        }, 0);
+    });
+
+    // Kembali dari cache browser (tombol Back): pulihkan tombol yang tadi "memproses"
+    window.addEventListener('pageshow', (e) => {
+        if (!e.persisted) return;
+        document.querySelectorAll('button.is-loading').forEach((b) => {
+            b.classList.remove('is-loading');
+            b.removeAttribute('aria-disabled');
+            if (b.dataset.origText) b.textContent = b.dataset.origText;
+        });
     });
 })();

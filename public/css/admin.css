@@ -1,0 +1,96 @@
+/* KopiLihdia Admin — dimuat setelah kopilihdia.css, hanya dipakai layout admin */
+.ad-body { background: var(--kl-cream); padding-bottom: 0 !important; }
+.ad-side { position: fixed; inset: 0 auto 0 0; width: 256px; z-index: 1050; display: flex; flex-direction: column; padding: 22px 14px 16px;
+           background: var(--kl-green-900); color: #fff; isolation: isolate; overflow-y: auto; transition: transform .3s var(--kl-ease); }
+.ad-side::before { content: ""; position: absolute; inset: 0; z-index: -1; opacity: .45; background: url('../img/pattern-kopi-light.svg') 0 0 / 240px; }
+.ad-brand { display: flex; align-items: center; gap: 10px; padding: 0 10px 22px; text-decoration: none; }
+.ad-brand img { height: 32px; width: auto; }
+.ad-brand span { font-size: .68rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; background: rgba(255,255,255,.16); color: #fff; padding: 3px 9px; border-radius: 999px; }
+.ad-navlabel { font-size: .68rem; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: rgba(255,255,255,.45); padding: 14px 14px 6px; }
+.ad-link { display: flex; align-items: center; gap: 12px; padding: 10px 14px; margin-bottom: 2px; border: 0; background: none; width: 100%; border-radius: 12px;
+           color: rgba(255,255,255,.78); font: inherit; font-weight: 600; font-size: .92rem; text-decoration: none; text-align: left; cursor: pointer;
+           transition: background .2s, color .2s, transform .2s var(--kl-ease); }
+.ad-link:hover { background: rgba(255,255,255,.09); color: #fff; transform: translateX(3px); }
+.ad-link.active { background: #fff; color: var(--kl-green-900); transform: none; }
+.ad-link .kl-i { color: inherit; }
+.ad-link.is-danger:hover { background: rgba(229,72,77,.25); }
+.ad-badge { margin-left: auto; min-width: 22px; height: 22px; padding: 0 7px; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center;
+            font-size: .72rem; font-weight: 700; background: #e0a526; color: #3b2a00; }
+.ad-side-foot { margin-top: auto; padding-top: 14px; border-top: 1px solid rgba(255,255,255,.14); }
+.ad-me { display: flex; align-items: center; gap: 10px; padding: 8px 10px 12px; }
+.ad-me .kl-avatar { background: var(--kl-green-600); flex-shrink: 0; }
+.ad-me strong { display: block; font-size: .88rem; line-height: 1.2; }
+.ad-me small { display: block; color: rgba(255,255,255,.6); font-size: .74rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 150px; }
+.ad-scrim { position: fixed; inset: 0; z-index: 1045; background: rgba(10,28,18,.55); opacity: 0; pointer-events: none; transition: opacity .25s; }
+
+.ad-main { margin-left: 256px; min-height: 100vh; }
+.ad-top { position: sticky; top: 0; z-index: 1030; height: 64px; display: flex; align-items: center; gap: 14px; padding: 0 28px;
+          background: rgba(246,244,233,.86); backdrop-filter: saturate(1.4) blur(12px); border-bottom: 1px solid var(--kl-line); }
+.ad-burger { display: none; width: 42px; height: 42px; border-radius: 12px; border: 1.5px solid var(--kl-line-strong); background: #fff; color: var(--kl-green); align-items: center; justify-content: center; cursor: pointer; padding: 0; }
+.ad-crumb { font-weight: 700; color: var(--kl-green-900); }
+.ad-crumb small { display: block; font-weight: 500; font-size: .75rem; color: var(--kl-muted); }
+.ad-top-r { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+.ad-pill { display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; border-radius: 999px; background: #fff; border: 1px solid var(--kl-line);
+           color: var(--kl-green-900); font-weight: 600; font-size: .86rem; text-decoration: none; transition: background .2s, border-color .2s; }
+.ad-pill:hover { background: var(--kl-mist); border-color: var(--kl-line-strong); color: var(--kl-green-900); }
+.ad-content { padding: 28px; max-width: 1240px; }
+
+/* Kartu & judul */
+.ad-card { background: #fff; border: 1px solid var(--kl-line); border-radius: var(--kl-r-md); }
+.ad-card-pad { padding: 22px; }
+.ad-card-title { font-size: 1rem; font-weight: 700; margin: 0 0 14px; display: flex; align-items: center; gap: 8px; }
+.ad-card-title .kl-i { color: var(--kl-green-600); }
+.ad-card .table-responsive { border-radius: var(--kl-r-md); }
+.ad-toolbar { display: flex; flex-wrap: wrap; gap: 10px; padding: 14px; margin-bottom: 16px; }
+.ad-toolbar > * { flex: 1 1 160px; }
+.ad-toolbar .ad-grow { flex: 2 1 260px; }
+.ad-toolbar .btn { flex: 0 0 auto; }
+.ad-actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: flex-end; padding-top: 18px; margin-top: 8px; border-top: 1px dashed var(--kl-line-strong); }
+
+/* Dashboard */
+.ad-hello { position: relative; isolation: isolate; overflow: hidden; background: var(--kl-green); color: #fff; border-radius: var(--kl-r-lg); padding: 30px 34px;
+            display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 18px; margin-bottom: 22px; }
+.ad-hello::before { content: ""; position: absolute; inset: 0; z-index: -1; background: url('../img/pattern-kopi-light.svg') 0 0 / 220px; }
+.ad-hello h1 { margin: 0 0 4px; font-size: clamp(1.4rem, 2.6vw, 2rem); font-weight: 800; letter-spacing: -.02em; }
+.ad-hello p { margin: 0; color: rgba(255,255,255,.85); }
+.ad-hello .btn-light { color: var(--kl-green-900); font-weight: 700; }
+.ad-sec { font-size: .74rem; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--kl-green-600); margin: 26px 0 12px; display: flex; align-items: center; gap: 10px; }
+.ad-sec::after { content: ""; flex: 1; height: 1px; background: var(--kl-line); }
+.ad-stats { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 14px; }
+.ad-stat { position: relative; display: flex; align-items: center; gap: 14px; padding: 18px; background: #fff; border: 1px solid var(--kl-line); border-radius: var(--kl-r-md);
+           text-decoration: none; color: inherit; transition: transform .25s var(--kl-ease), box-shadow .25s, border-color .2s; }
+a.ad-stat:hover { transform: translateY(-3px); box-shadow: var(--kl-shadow); border-color: var(--kl-line-strong); color: inherit; }
+.ad-stat-ic { width: 50px; height: 50px; border-radius: 15px; display: grid; place-items: center; background: var(--kl-soft); color: var(--kl-green); flex-shrink: 0; }
+.ad-stat.is-warn .ad-stat-ic { background: var(--kl-amber-bg); color: var(--kl-amber); }
+.ad-stat-n { font-size: 1.9rem; font-weight: 800; line-height: 1; letter-spacing: -.02em; }
+.ad-stat-l { font-size: .84rem; color: var(--kl-muted); font-weight: 600; margin-top: 5px; }
+.ad-stat .ad-go { margin-left: auto; color: var(--kl-muted); opacity: 0; transform: translateX(-6px); transition: .25s var(--kl-ease); }
+a.ad-stat:hover .ad-go { opacity: 1; transform: none; }
+.ad-todo { display: flex; align-items: center; gap: 14px; padding: 16px 18px; border-radius: var(--kl-r-md); background: var(--kl-amber-bg); color: var(--kl-amber); font-weight: 600; text-decoration: none; }
+.ad-todo.is-ok { background: var(--kl-soft); color: var(--kl-green-900); }
+.ad-todo .btn { margin-left: auto; }
+.ad-quick { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+.ad-quick a { display: flex; align-items: center; gap: 10px; padding: 14px 16px; background: #fff; border: 1px solid var(--kl-line); border-radius: var(--kl-r-md);
+              font-weight: 600; color: var(--kl-ink); text-decoration: none; transition: .2s var(--kl-ease); }
+.ad-quick a:hover { border-color: var(--kl-green); background: var(--kl-mist); transform: translateY(-2px); }
+.ad-quick .kl-i { color: var(--kl-green-600); }
+
+/* Form */
+.ad-upload { border: 1.5px dashed var(--kl-line-strong); border-radius: var(--kl-r-md); background: var(--kl-mist); padding: 14px; text-align: center; }
+.ad-upload img { width: 100%; aspect-ratio: 4/3; object-fit: cover; border-radius: 12px; margin-bottom: 12px; background: #fff; }
+.ad-upload .ad-ph { width: 100%; aspect-ratio: 4/3; border-radius: 12px; margin-bottom: 12px; display: grid; place-items: center; background: #fff url('../img/pattern-kopi-green.svg') center / 150px; }
+.ad-upload .ad-ph img { width: 30%; aspect-ratio: auto; margin: 0; opacity: .5; background: none; }
+.form-switch .form-check-input { width: 2.6em; height: 1.4em; }
+.ad-kv { display: flex; justify-content: space-between; gap: 12px; padding: 3px 0; }
+
+@media (max-width: 991.98px) {
+    .ad-side { transform: translateX(-100%); box-shadow: var(--kl-shadow-lg); }
+    .ad-shell.is-open .ad-side { transform: none; }
+    .ad-shell.is-open .ad-scrim { opacity: 1; pointer-events: auto; }
+    .ad-main { margin-left: 0; }
+    .ad-burger { display: inline-flex; }
+    .ad-top { padding: 0 16px; }
+    .ad-content { padding: 18px 16px 32px; }
+    .ad-pill span { display: none; }
+    .ad-hello { padding: 24px 22px; }
+}
